@@ -11,6 +11,7 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.hardware.Camera.Size;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -37,15 +38,14 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 	private int limitY;
 	private int logicX;
 	private int logicY;
+	private int lastX;
+	private int lastY;
 	
 	// Scratch attributes
 	private int[] bufferPixels;
 	public static int pixelGray;
 	private Timer timer;
 	
-	//public static Bitmap imageToErase;
-	//public static Bitmap imageBackground;
-	//private int stride= 30;
 	private int stride= 8;
 	
 	
@@ -120,9 +120,11 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 		drawingArea.setOnTouchListener(this);
 		
 		// Initialize the logical matrix which it tells us the order of the layers
+		lastX= -1;
+		lastY= -1;
+		
 		limitX= drawingArea.getWidth()/stride;
 		limitY= drawingArea.getHeight()/stride;
-		//Log.d("LOGIC LIMIT", "[" + limitX + ", " + limitY + "]");
 		
 		logicLayer= new int[limitX][limitY];
 		for(int i=0; i<limitX; ++i)
@@ -140,33 +142,40 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 		logicY= y/stride;
 		
 		
-		if( logicLayer[logicX][logicY] != layers.size() )
+		// Check if the user are scratching the same zone
+		if( ((lastX == -1) && (lastY == -1)) || ((lastX != logicX) && (lastY != logicY)) )
 		{
-			layers.get(logicLayer[logicX][logicY]).getPixels(bufferPixels, 0, layers.get(0).getWidth(), logicX*stride, logicY*stride, stride, stride);
-			layers.get(0).setPixels(bufferPixels, 0, layers.get(0).getWidth(), logicX*stride, logicY*stride, stride, stride);
-			drawingArea.setImageBitmap(layers.get(0));
+			// Update the last logic coordinates
+			lastX= logicX;
+			lastY= logicY;
 			
-			logicLayer[logicX][logicY]+=1;
-		}
-		
-		// Generate the indicated scratch effect
-		/*for(int i=logicX-radius; i<logicX+radius; ++i)
-			for(int j=logicY-radius; j<logicY+radius; ++j)
+			/*if( logicLayer[logicX][logicY] != layers.size() )
 			{
-				try
-				{
-					if( logicLayer[i][j] != layers.size() )
-					{
-						layers.get(logicLayer[i][j]).getPixels(bufferPixels, 0, layers.get(0).getWidth(), i*stride, j*stride, stride, stride);
-						layers.get(0).setPixels(bufferPixels, 0, layers.get(0).getWidth(), i*stride, j*stride, stride, stride);
-						drawingArea.setImageBitmap(layers.get(0));
-						
-						logicLayer[i][j]+=1;
-					}
-				}catch(Exception e){}
+				layers.get(logicLayer[logicX][logicY]).getPixels(bufferPixels, 0, layers.get(0).getWidth(), logicX*stride, logicY*stride, stride, stride);
+				layers.get(0).setPixels(bufferPixels, 0, layers.get(0).getWidth(), logicX*stride, logicY*stride, stride, stride);
+				drawingArea.setImageBitmap(layers.get(0));
+				
+				logicLayer[logicX][logicY]+=1;
 			}*/
-		
-		//Log.d("Logic XY", "[" + (int)event.getX() + ", " + (int)event.getY() + "]" + " -> " +  "[" + logicX + ", " + logicY + "]");
+			
+			// Generate the indicated scratch effect
+			for(int i=logicX-radius; i<logicX+radius; ++i)
+				for(int j=logicY-radius; j<logicY+radius; ++j)
+				{
+					try
+					{
+						if( ((i == logicX) && (j == logicY)) || (logicLayer[i][j] == logicLayer[logicX][logicY]) )
+							if( logicLayer[i][j] != layers.size() )
+							{
+								layers.get(logicLayer[i][j]).getPixels(bufferPixels, 0, layers.get(0).getWidth(), i*stride, j*stride, stride, stride);
+								layers.get(0).setPixels(bufferPixels, 0, layers.get(0).getWidth(), i*stride, j*stride, stride, stride);
+								drawingArea.setImageBitmap(layers.get(0));
+								
+								logicLayer[i][j]+=1;
+							}
+					}catch(Exception e){}
+				}
+		}
 	}
 
 	@Override
@@ -176,78 +185,23 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 		if( event.getPointerCount() == 1 )
 		{
 			// Check the correct action
-			if( (event.getAction() == MotionEvent.ACTION_MOVE) /*|| (event.getAction() == MotionEvent.ACTION_DOWN)*/ )
-			{	
-				scratch((int)event.getX(), (int)event.getY(), 2);
-				
-				/*
-				// Make the scratch effect 
-				try
-				{
-					layers.get(logicLayer[(int)event.getX()][(int)event.getY()]).getPixels(bufferPixels, 0, layers.get(logicLayer[(int)event.getX()][(int)event.getY()]).getWidth(), (int)event.getX(), (int)event.getY(), stride, stride);
-					layers.get(0).setPixels(bufferPixels, 0, layers.get(0).getWidth(), (int)event.getX(), (int)event.getY(), stride, stride);
-					drawingArea.setImageBitmap(layers.get(0));
-					
-					//if( (logicLayer[(int)event.getX()][(int)event.getY()] + 1) < numLayers )
-					for(int i=(int)event.getX(); i<(int)event.getX()+stride; ++i)
-						for(int j=(int)event.getX(); j<(int)event.getX()+stride; ++j)
-							if( logicLayer[i][j] < numLayers )
-								logicLayer[i][j]= logicLayer[i][j] + 1;
-					
-					Log.d("LAYER", String.valueOf(logicLayer[(int)event.getX()][(int)event.getY()]));
-					
-					
-					//imageBackground.getPixels(pixels, 0, imageBackground.getWidth(), (int)event.getX(), (int)event.getY(), stride, stride);				
-					//imageToErase.setPixels(pixels, 0, imageToErase.getWidth(), (int)event.getX(), (int)event.getY(), stride, stride);				
-					//drawingArea.setImageBitmap(imageToErase);
-					
-				}catch(Exception ex){}*/
+			if( (event.getAction() == MotionEvent.ACTION_MOVE) || (event.getAction() == MotionEvent.ACTION_DOWN) )
+				scratch((int)event.getX(), (int)event.getY(), 1);
+			else
+			{
+				lastX= -1;
+				lastY= -1;
 			}
 		}
 			
-		return true;
-				
-				
-				
+		return true;			
 	}
 
 	@Override
 	public void run() {
 
-		Log.d("IMAGEVIEW", "[" + drawingArea.getWidth() + ", " + drawingArea.getHeight() + "]");
-		
+		Log.d("IMAGEVIEW", "[" + drawingArea.getWidth() + ", " + drawingArea.getHeight() + "]");		
 		initialize(false);
-		
-		// Create the stack of layers
-		/*for(int i=0; i<numLayers; ++i)
-		{
-			layers.add(Bitmap.createBitmap(drawingArea.getWidth(), drawingArea.getHeight(), Bitmap.Config.RGB_565));
-			if( i%2 == 0)
-				layers.get(i).eraseColor(Color.GRAY);
-			else
-				layers.get(i).eraseColor(Color.CYAN);
-		}
-		
-		// Initialize the logical matrix which it tells us the order of the layers
-		limitX= drawingArea.getWidth()/stride;
-		limitY= drawingArea.getHeight()/stride;
-		Log.d("LOGIC LIMIT", "[" + limitX + ", " + limitY + "]");
-		
-		logicLayer= new int[limitX][limitY];
-		for(int i=0; i<limitX; ++i)
-			for(int j=0; j<limitY; ++j)
-				logicLayer[i][j]= 1;
-		
-		// Get the image which will be shown after the scratched image
-		layers.add( BitmapFactory.decodeResource(getResources(), R.drawable.ganar) );
-		layers.set(layers.size()-1, Bitmap.createScaledBitmap(layers.get(layers.size()-1), drawingArea.getWidth(), drawingArea.getHeight(), false));
-		
-		// Create the buffer which it will be used to do the scratch effect
-		bufferPixels= new int[drawingArea.getWidth() * drawingArea.getHeight()];*/
-		
-		// Initialize the timer
-		//timer= new Timer();
-		//timer.sendEmptyMessageDelayed(1, 2000);
 	}
 	
 	

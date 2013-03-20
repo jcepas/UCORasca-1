@@ -1,10 +1,8 @@
 package com.example.trabajoais;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.app.Activity;
@@ -12,18 +10,15 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.hardware.Camera.Size;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Menu;
+//import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.View.OnTouchListener;
-import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
-import android.widget.Toast;
+
 
 public class Inicio extends Activity implements OnTouchListener, Runnable {
 
@@ -31,7 +26,7 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 	public static ImageView drawingArea;
 	
 	// Layer attributes
-	private ArrayList<Bitmap> layers; // Pila de Bitmaps que seran las capas de la app siendo la ultima la resolucion
+	private ArrayList<Bitmap> layers;
 	private int numLayers;
 	private int[][] logicLayer;
 	private int limitX;
@@ -90,6 +85,16 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 		return true;
 	}*/
 	
+	
+	/**
+     * 	Method which it initializes all the layers that the user has indicated
+     * 
+     *	@param		releaseMemory: Flag which it indicates if it is needed release the memory or not (boolean)
+     * 
+     * 	@date		18/03/2013
+     * 	@version	1.0
+     * 	@author		Manuel Flores Arribas
+     */
 	public void initialize(boolean releaseMemory)
 	{
 		// Check if it is necessary to release memory
@@ -135,12 +140,24 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 		bufferPixels= new int[drawingArea.getWidth() * drawingArea.getHeight()];
 	}
 	
+	
+	
+	/**
+     * 	Method which it generates the scratch effect
+     * 
+     *	@param		x: Coordinate X of the image pixel to scratch (int)
+     *	@param		y: Coordinate Y of the image pixel to scratch (int)
+     *	@param		radius: Radius of the scratch effect (int)
+     * 
+     * 	@date		18/03/2013
+     * 	@version	1.0
+     * 	@author		Manuel Flores Arribas
+     */
 	public void scratch(int x, int y, int radius)
 	{
 		// Get the logic coordinates 
 		logicX= x/stride;
-		logicY= y/stride;
-		
+		logicY= y/stride;		
 		
 		// Check if the user are scratching the same zone
 		if( ((lastX == -1) && (lastY == -1)) || ((lastX != logicX) && (lastY != logicY)) )
@@ -177,8 +194,39 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 				}
 		}
 	}
+	
+	
+	
+	/**
+     * 	Method which it returns the logical coordinates of the given point
+     * 
+     *	@param		p: Point represented by the Point class of which we want to get its logic coordinates (Point)
+     *	
+     *	@return		Object of Point class with the logical coordinates
+     * 
+     * 	@date		20/03/2013
+     * 	@version	1.0
+     * 	@author		Manuel Flores Arribas
+     */
+	public Point real2logic(Point p)
+	{
+		return new Point(p.x/stride, p.y/stride);
+	}
+	
 
-	@Override
+	
+	/**
+     * 	Overwrite the method onTouch of the Android library to indicate the actions to do when the user touches the screen
+     * 
+     * 	@param		v: View object which it sends the signal
+     *  @param		event: MotionEvent object with all the information about the signal
+     *  
+     *  @return		true because we want to pick the signal
+     * 
+     * 	@date		10/03/2013
+     * 	@version	1.0
+     * 	@author		Manuel Flores Arribas
+     */
 	public boolean onTouch(View v, MotionEvent event)
 	{
 		// Check if there is only one finger
@@ -197,12 +245,21 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 		return true;			
 	}
 
-	@Override
+	
+	
+	/**
+     * 	Overwrite the method run of the Runnable class to indicate the actions to do when the scratch UI is shown
+     * 
+     * 	@date		20/03/2013
+     * 	@version	1.0
+     * 	@author		Manuel Flores Arribas
+     */
 	public void run() {
 
 		Log.d("IMAGEVIEW", "[" + drawingArea.getWidth() + ", " + drawingArea.getHeight() + "]");		
 		initialize(false);
 	}
+	
 	
 	
 	static class Timer extends Handler

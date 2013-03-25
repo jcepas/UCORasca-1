@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
 				break;
 									
 			case R.id.action_about: 
-				startSection = new Intent(this, Creditos.class);
+				startSection = new Intent(this, About.class);
 				startActivity(startSection);
 				break;
 									
@@ -88,7 +88,7 @@ public class MainActivity extends Activity {
 	}
 	
 	public boolean startGame() {
-		startSection = new Intent(this, Inicio.class);
+		startSection = new Intent(this, Scratch.class);
 		startSection.putExtra(N_LAYERS_KEY, n_layers);
 		startActivity(startSection);
 		return true;

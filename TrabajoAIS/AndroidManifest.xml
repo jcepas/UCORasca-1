@@ -24,12 +24,12 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.example.trabajoais.Inicio"
+            android:name="com.example.trabajoais.Scratch"
             android:label="@string/title_activity_inicio"
             android:screenOrientation="portrait" >
         </activity>
         <activity
-            android:name="com.example.trabajoais.Creditos"
+            android:name="com.example.trabajoais.About"
             android:label="@string/title_activity_creditos"
             android:screenOrientation="portrait" >
         </activity>

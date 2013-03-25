@@ -20,13 +20,14 @@ import android.view.View.OnTouchListener;
 import android.widget.ImageView;
 
 
-public class Inicio extends Activity implements OnTouchListener, Runnable {
+public class Scratch extends Activity implements OnTouchListener, Runnable {
 
 	// UI attributes	
 	public static ImageView drawingArea;
 	
 	// Layer attributes
 	private ArrayList<Bitmap> layers;
+	private ImageSolution solution;
 	private int numLayers;
 	private int[][] logicLayer;
 	private int limitX;
@@ -49,7 +50,7 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 		super.onCreate(savedInstanceState);		
 		requestWindowFeature(Window.FEATURE_NO_TITLE); // FullScreen
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		setContentView(R.layout.activity_inicio);
+		setContentView(R.layout.activity_scratch);
 		
 		// Get the reference to the UI elements
 		drawingArea= (ImageView)findViewById(R.id.viewDraw);
@@ -117,8 +118,9 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 		}
 		
 		// Get the image which will be shown after the scratched
-		layers.add( BitmapFactory.decodeResource(getResources(), R.drawable.ganar) );
-		layers.set(layers.size()-1, Bitmap.createScaledBitmap(layers.get(layers.size()-1), drawingArea.getWidth(), drawingArea.getHeight(), false));
+		solution= new ImageSolution(BitmapFactory.decodeResource(getResources(), R.drawable.ganar), 0, 0, new Point(0,0));
+		solution.scale(drawingArea.getWidth(), drawingArea.getHeight());
+		layers.add(solution.getImage());
 		
 		// Set the first grey image to scratch
 		drawingArea.setImageBitmap(layers.get(0));
@@ -289,7 +291,7 @@ public class Inicio extends Activity implements OnTouchListener, Runnable {
 			{
 				// Release the background image
 				//Inicio.drawingArea.setImageBitmap(imageBackground);
-				Inicio.drawingArea.setOnTouchListener(null);
+				Scratch.drawingArea.setOnTouchListener(null);
 			}
 			else
 				this.sendEmptyMessageDelayed(1, 2000);

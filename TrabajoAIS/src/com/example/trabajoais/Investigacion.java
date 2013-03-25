@@ -2,7 +2,7 @@ package com.example.trabajoais;
 
 import java.util.ArrayList;
 
-import com.example.trabajoais.Inicio.Timer;
+import com.example.trabajoais.Scratch.Timer;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -176,7 +176,7 @@ public class Investigacion extends Activity implements OnTouchListener, Runnable
 				{
 					// Release the background image
 					//Inicio.drawingArea.setImageBitmap(imageBackground);
-					Inicio.drawingArea.setOnTouchListener(null);
+					Scratch.drawingArea.setOnTouchListener(null);
 				}
 				else
 					this.sendEmptyMessageDelayed(1, 2000);

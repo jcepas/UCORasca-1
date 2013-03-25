@@ -47,7 +47,7 @@ public class ImageSolution {
      * 	@version	1.0
      * 	@author		Matias Ramirez Ramirez
      */
-	public int setWidth() {
+	public int getWidth() {
 		return this.width;
 	}
 
@@ -58,7 +58,7 @@ public class ImageSolution {
      * 	@version	1.0
      * 	@author		Matias Ramirez Ramirez
      */
-	public int setHeight() {
+	public int getHeight() {
 		return this.height;
 	}
 	

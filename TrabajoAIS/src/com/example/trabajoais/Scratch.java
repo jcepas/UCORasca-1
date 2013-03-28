@@ -19,6 +19,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 
 public class Scratch extends Activity implements OnTouchListener, Runnable {
@@ -28,11 +29,12 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 	
 	// Layer attributes
 	private ArrayList<Bitmap> layers;
-	private ImageSolution solution;
-	private int numLayers;
+	public static ImageSolution solution;
+	public static int numLayers;
 	
+	private Vector<Integer> dividers;
 	private int stride;
-	private int[][] logicLayer;
+	public static int[][] logicLayer;
 	private int limitX;
 	private int limitY;
 	private int logicX;
@@ -103,7 +105,7 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 	public Vector<Integer> dividers(int n) {
 		Vector<Integer> div = new Vector<Integer>();
 
-		for (int i = 1; i <= n; i++) {
+		for (int i = 2; i <= n; i++) {
 			if (n % i == 0)
 				div.addElement(i);
 		}
@@ -125,34 +127,28 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 	 * @version 1.0
 	 * @author Alberto Jimenez Lopez (Modified by Manuel Flores Arribas on 25/03/2013)
 	 */
-	public int minimumCommonDivider(int number1, int number2) {
+	public Vector<Integer> vectorCommonDivider(int number1, int number2) {
 		
 		Vector<Integer> a= dividers(number1);
 		Vector<Integer> b= dividers(number2);
-		
-		int min = 0;
+		Vector<Integer> common = new Vector<Integer>();
 
 		if (a.size() < b.size()) {
-			for (int i = 0; i < a.size(); i++) {
-				for (int j = 0; j < b.size(); j++) {
-					if (a.elementAt(i) == b.elementAt(j)) {
-						min = a.elementAt(i);
-						break;
-					}
-				}
-			}
+			for (int i = 0; i < a.size(); i++)
+				for (int j = 0; j < b.size(); j++)
+					if (a.elementAt(i) == b.elementAt(j))
+						common.addElement(a.elementAt(i));
 		} else {
-			for (int i = 0; i < b.size(); i++) {
-				for (int j = 0; j < a.size(); j++) {
-					if (b.elementAt(i) == a.elementAt(j)) {
-						min = b.elementAt(i);
-						break;
-					}
-				}
-			}
+			for (int i = 0; i < b.size(); i++)
+				for (int j = 0; j < a.size(); j++)
+					if (b.elementAt(i) == a.elementAt(j))
+						common.addElement(b.elementAt(i));
 		}
 
-		return min;
+		//Log.d(""+number1, a.toString());
+		//Log.d(""+number2, b.toString());
+		Log.d("COMUN", common.toString());
+		return common;
 	}
 	
 	
@@ -188,7 +184,11 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 		}
 		
 		// Get the image which will be shown after the scratched
-		solution= new ImageSolution(BitmapFactory.decodeResource(getResources(), R.drawable.ganar), 0, 0, new Point(0,0));
+		dividers= vectorCommonDivider(drawingArea.getWidth(), drawingArea.getHeight());
+		stride= dividers.get( dividers.size()/2 );
+		Log.d("STRIDE", ""+stride);
+		
+		solution= new ImageSolution(BitmapFactory.decodeResource(getResources(), R.drawable.ganar), stride, new Point(0,0), 690, 650);
 		solution.scale(drawingArea.getWidth(), drawingArea.getHeight());
 		layers.add(solution.getImage());
 		
@@ -200,11 +200,14 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 		lastX= -1;
 		lastY= -1;
 		
-		stride= minimumCommonDivider(drawingArea.getWidth(), drawingArea.getHeight());
-		Log.d("STRIDE", "" + stride);
-		
 		limitX= drawingArea.getWidth()/stride;
 		limitY= drawingArea.getHeight()/stride;
+		
+		//limitX= drawingArea.getHeight()/stride;
+		//limitY= drawingArea.getWidth()/stride;
+		
+		Log.d("LOGIC MATRIX", "[" + limitX + ", " + limitY + "]");
+		Log.d("SCREEN", "[" + drawingArea.getHeight() + ", " + drawingArea.getWidth() + "]");
 		
 		logicLayer= new int[limitX][limitY];
 		for(int i=0; i<limitX; ++i)
@@ -213,6 +216,9 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 		
 		// Create the buffer which it will be used to do the scratch effect
 		bufferPixels= new int[drawingArea.getWidth() * drawingArea.getHeight()];
+		
+		timer= new Timer();
+		//timer.sendEmptyMessageDelayed(1, 2 * 1000);
 	}
 	
 	
@@ -232,10 +238,64 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 	{
 		// Get the logic coordinates 
 		logicX= x/stride;
-		logicY= y/stride;		
+		logicY= y/stride;
+		
+		if( (lastX == -1) && (lastY == -1) )
+		{
+			lastX= logicX;
+			lastY= logicY;
+			
+			for(int i=logicX-radius; i<logicX+radius; ++i)
+			{
+				for(int j=logicY-radius; j<logicY+radius; ++j)
+				{
+					try
+					{
+						if( logicLayer[i][j] != layers.size() )
+						{
+							layers.get(logicLayer[i][j]).getPixels(bufferPixels, 0, layers.get(0).getWidth(), i*stride, j*stride, stride, stride);
+							layers.get(0).setPixels(bufferPixels, 0, layers.get(0).getWidth(), i*stride, j*stride, stride, stride);
+							drawingArea.setImageBitmap(layers.get(0));
+							
+							logicLayer[i][j]+=1;
+						}
+					}catch(Exception e){}
+				}
+			}
+		}
+		else
+		{
+			int distancia;
+			
+			distancia= (int) Math.sqrt( Math.pow((logicX-lastX), 2) + Math.pow((logicY-lastY), 2) );
+			
+			if( distancia >= ((radius)*2) )
+			{
+				lastX= logicX;
+				lastY= logicY;
+				
+				for(int i=logicX-radius; i<logicX+radius; ++i)
+				{
+					for(int j=logicY-radius; j<logicY+radius; ++j)
+					{
+						try
+						{
+							if( logicLayer[i][j] != layers.size() )
+							{
+								layers.get(logicLayer[i][j]).getPixels(bufferPixels, 0, layers.get(0).getWidth(), i*stride, j*stride, stride, stride);
+								layers.get(0).setPixels(bufferPixels, 0, layers.get(0).getWidth(), i*stride, j*stride, stride, stride);
+								drawingArea.setImageBitmap(layers.get(0));
+								
+								logicLayer[i][j]+=1;
+							}
+						}catch(Exception e){}
+					}
+				}
+			}
+		}
 		
 		// Check if the user are scratching the same zone
-		if( ((lastX == -1) && (lastY == -1)) || ((lastX != logicX) && (lastY != logicY)) )
+		/*if( ((lastX == -1) && (lastY == -1)) || ((lastX != logicX) && (lastY != logicY)) )
 		{
 			// Update the last logic coordinates
 			lastX= logicX;
@@ -248,15 +308,19 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 				drawingArea.setImageBitmap(layers.get(0));
 				
 				logicLayer[logicX][logicY]+=1;
-			}*/
+			}*
+			
+			int numLayer= logicLayer[logicX][logicY];
 			
 			// Generate the indicated scratch effect
 			for(int i=logicX-radius; i<logicX+radius; ++i)
+			{
 				for(int j=logicY-radius; j<logicY+radius; ++j)
 				{
 					try
 					{
 						if( ((i == logicX) && (j == logicY)) || (logicLayer[i][j] == logicLayer[logicX][logicY]) )
+						{
 							if( logicLayer[i][j] != layers.size() )
 							{
 								layers.get(logicLayer[i][j]).getPixels(bufferPixels, 0, layers.get(0).getWidth(), i*stride, j*stride, stride, stride);
@@ -265,9 +329,15 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 								
 								logicLayer[i][j]+=1;
 							}
-					}catch(Exception e){}
+							else
+								Log.d("SCRATCH", "NO ENTRA 2¼");
+						}
+						else
+							Log.d("SCRATCH", "NO ENTRA 1¼");
+					}catch(Exception e){e.printStackTrace();}
 				}
-		}
+			}
+		}*/
 	}
 	
 	
@@ -281,12 +351,12 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
      * 	@version	1.0
      * 	@author		Manuel Flores Arribas
      */
-	public void real2logic(Point p)
+	/*public void real2logic(Point p)
 	{
 		p.x= p.x/stride;
 		p.y= p.y/stride;
 		//return new Point(p.x/stride, p.y/stride);
-	}
+	}*/
 	
 
 	
@@ -306,10 +376,14 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 	{
 		// Check if there is only one finger
 		if( event.getPointerCount() == 1 )
-		{
+		{			
 			// Check the correct action
 			if( (event.getAction() == MotionEvent.ACTION_MOVE) || (event.getAction() == MotionEvent.ACTION_DOWN) )
-				scratch((int)event.getX(), (int)event.getY(), 1);
+			{
+				scratch((int)event.getX(), (int)event.getY(), 3);
+				
+				//Log.d("POINTER", "" + (int)event.getX() + ", " + (int)event.getY());
+			}
 			else
 			{
 				lastX= -1;
@@ -336,31 +410,67 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 	}
 	
 	
-	
+	/** Class to check the percentage completed of interest area
+	 * 
+	 *  @date		25/03/2013
+     * 	@version	1.0
+     * 	@author		Manuel Navarro Perez, Francisco Aranda Garcia
+	 */
 	static class Timer extends Handler
 	{
-		/*private float totalPixel;
+		private Point logicPoint;
+		private int logicWidth;
+		private int logicHeight;
+		
 		private float count;
-		private float percent;*/
+		private float percent;
 		
 		public Timer()
 		{
-			//totalPixel= Inicio.imageToErase.getWidth() * Inicio.imageToErase.getHeight();
+			logicPoint= Scratch.solution.getInterestingLogicPoint();
+			logicWidth= Scratch.solution.getInterestingLogicWidth();
+			logicHeight= Scratch.solution.getInterestingLogicHeight();
 		}
 		
+		/**
+	     * 	Method which check the interest area
+	     * 
+	     *	@param		msg: Defines a message containing a description and arbitrary data object that can be sent to a Handler (Message)
+	     * 
+	     * 	@date		25/03/2013
+	     * 	@version	1.0
+	     * 	@author		Manuel Navarro Perez, Francisco Aranda Garcia
+	     */
 		public void handleMessage(Message msg) // Metodo a sobrecargar
 		{
 			super.handleMessage(msg);
 			
+			count = 0;
 			
-			/*if( (percent > 0) && (percent <= 50) )
+			//Check the completed percentage
+			for (int i = logicPoint.x; i<(logicWidth + logicPoint.x); i++)
+				for (int j = logicPoint.y; j<(logicHeight + logicPoint.y); j++)
+					if(Scratch.logicLayer[i][j] == (numLayers + 1))
+						count += 1;
+			
+			//Log.d("TIMER", "[" + logicPoint.x + " -> " + (logicHeight + logicPoint.x) + "]");
+			//Log.d("TIMER", "[" + logicPoint.y + " -> " + (logicWidth + logicPoint.y) + "]");
+
+			percent = (count * 100)/(logicWidth*logicHeight);
+
+			//Show a screen notification
+			Log.d("PORCENTAJE", "" + percent + "%");
+
+			if(percent > 70)
 			{
-				// Release the background image
-				Inicio.drawingArea.setImageBitmap(imageBackground);
-				Scratch.drawingArea.setOnTouchListener(null);
+				//Release the background image
+				//Scratch.drawingArea.setImageBitmap(Scratch.solution.getImage());
+				//Scratch.drawingArea.setOnTouchListener(null);
+				
+				Log.d("PORCENTAJE", "FIN!");
 			}
 			else
-				this.sendEmptyMessageDelayed(1, 2000);*/
+				this.sendEmptyMessageDelayed(1, 2 * 1000);
 		}
 	};
 }

@@ -13,7 +13,7 @@ public class MainActivity extends Activity {
 	
 	private Intent startSection;
 	private boolean launchDialog = true;
-	private int n_layers = 1;
+	private int n_layers;
 	public static String N_LAYERS_KEY= "n_layers";
 
 	@Override
@@ -61,6 +61,7 @@ public class MainActivity extends Activity {
 	}
 	
 	public boolean showLayerDialog() {
+		n_layers = 1;
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle(R.string.layer_selection);
 		builder.setPositiveButton(R.string.alert_ok, new DialogInterface.OnClickListener() {

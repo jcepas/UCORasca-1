@@ -78,8 +78,8 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 		//layers.clear();
 		
 		// Check if the timer is still working to stop it
-		//if( timer.hasMessages(1) )
-		//	timer.removeMessages(1);
+		if( timer.hasMessages(1) )
+			timer.removeMessages(1);
 	}
 
 	
@@ -187,7 +187,7 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 		
 		// Get the image which will be shown after the scratched
 		dividers= vectorCommonDivider(drawingArea.getWidth(), drawingArea.getHeight());
-		stride= dividers.get( dividers.size()/2 );
+		stride= dividers.get( 0 );
 		
 		solution= new ImageSolution(BitmapFactory.decodeResource(getResources(), R.drawable.ganar), stride, new Point(0,0), 690, 650);
 		solution.scale(drawingArea.getWidth(), drawingArea.getHeight());
@@ -310,11 +310,7 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 		{			
 			// Check the correct action
 			if( (event.getAction() == MotionEvent.ACTION_MOVE) || (event.getAction() == MotionEvent.ACTION_DOWN) )
-			{
-				scratch((int)event.getX(), (int)event.getY(), 3);
-				
-				//Log.d("POINTER", "" + (int)event.getX() + ", " + (int)event.getY());
-			}
+				scratch((int)event.getX(), (int)event.getY(), 2);
 			else
 			{
 				lastX= -1;

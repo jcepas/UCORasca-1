@@ -241,7 +241,7 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 		else
 		{
 			distance= (int) Math.sqrt( Math.pow((logicX-lastX), 2) + Math.pow((logicY-lastY), 2) );
-			if( distance >= ((radius*2)+1) )
+			if( distance >= (radius*2) )
 				scratchVerified= true;
 			else
 				scratchVerified= false;
@@ -310,7 +310,7 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 		{			
 			// Check the correct action
 			if( (event.getAction() == MotionEvent.ACTION_MOVE) || (event.getAction() == MotionEvent.ACTION_DOWN) )
-				scratch((int)event.getX(), (int)event.getY(), 2);
+				scratch((int)event.getX(), (int)event.getY(), 4);
 			else
 			{
 				lastX= -1;

@@ -44,6 +44,8 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 	// Scratch attributes
 	private int[] bufferPixels;
 	private int distance;
+	private int distanceCorrection;
+	private float slope;
 	private boolean scratchVerified;
 	public static int percentScratched= 60;
 	private Timer timer;
@@ -74,22 +76,10 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 		for(int i=0; i<layers.size(); ++i)
 			layers.get(i).recycle();
 		
-		// Clean the ArrayList object
-		//layers.clear();
-		
 		// Check if the timer is still working to stop it
 		if( timer.hasMessages(1) )
 			timer.removeMessages(1);
 	}
-
-	
-	
-	/*@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.inicio, menu);
-		return true;
-	}*/
 	
 	
 	
@@ -147,9 +137,6 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 						common.addElement(b.elementAt(i));
 		}
 
-		//Log.d(""+number1, a.toString());
-		//Log.d(""+number2, b.toString());
-		Log.d("COMUN", common.toString());
 		return common;
 	}
 	
@@ -241,10 +228,21 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 		else
 		{
 			distance= (int) Math.sqrt( Math.pow((logicX-lastX), 2) + Math.pow((logicY-lastY), 2) );
-			if( distance >= (radius*2) )
+			
+			slope= Math.abs( (float)(logicY-lastY)/(float)(logicX-lastX) );
+			Log.d("PENDIENTE", String.valueOf(slope));
+			
+			if( (slope == Float.POSITIVE_INFINITY) || (slope == Float.NaN) || (slope == 0.0) )
+				distanceCorrection= radius*2;
+			else
+				distanceCorrection= (radius+1)*2;
+			
+			if( distance >= distanceCorrection )
 				scratchVerified= true;
 			else
 				scratchVerified= false;
+			
+			
 		}
 		
 		// Scratch effect
@@ -270,24 +268,6 @@ public class Scratch extends Activity implements OnTouchListener, Runnable {
 				}
 		}
 	}
-	
-	
-	
-	/**
-     * 	Method which it returns the logical coordinates of the given point at the same given object
-     * 
-     *	@param		p: Point represented by the Point class of which we want to get its logic coordinates (Point)
-     * 
-     * 	@date		25/03/2013
-     * 	@version	1.0
-     * 	@author		Manuel Flores Arribas
-     */
-	/*public void real2logic(Point p)
-	{
-		p.x= p.x/stride;
-		p.y= p.y/stride;
-		//return new Point(p.x/stride, p.y/stride);
-	}*/
 	
 
 	
